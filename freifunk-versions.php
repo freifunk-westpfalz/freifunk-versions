@@ -101,6 +101,8 @@ function gluon_shortcode_versions( $atts, $content, $name ) {
 		$grep = false;
 	}
 
+	ksort($manifest);
+
 	foreach ( $manifest as $hw => $versions ) {
 		// filter
 		if ( $grep && ( false === strpos( $hw, $grep ) ) ) {
@@ -114,23 +116,23 @@ function gluon_shortcode_versions( $atts, $content, $name ) {
 		foreach ( $versions as $hw_ver => $filename ) {
 			$filename = str_replace( '-sysupgrade', '', $filename );
 			$hw_ver_links[] = sprintf(
-				'<a href="%s%s">%s.x</a>',
-				FF_HH_STABLE_BASEDIR.'factory/',
+				'<a href="%s%s">v%s</a>',
+				GLUON_STABLE_BASEDIR.'factory/',
 				$filename, $hw_ver
 			);
 		}
-		$outstr .= '<td>Hardware Version ' . join( ', ', $hw_ver_links ) . '</td>';
+		$outstr .= '<td>' . join( ', ', $hw_ver_links ) . '</td>';
 
 		// sysupgrade versions
 		$hw_ver_links = array();
 		foreach ( $versions as $hw_ver => $filename ) {
 			$hw_ver_links[] = sprintf(
-				'<a href="%s%s">%s.x</a>',
-				FF_HH_STABLE_BASEDIR.'sysupgrade/',
+				'<a href="%s%s">v%s</a>',
+				GLUON_STABLE_BASEDIR.'sysupgrade/',
 				$filename, $hw_ver
 			);
 		}
-		$outstr .= '<td>Hardware Version ' . join( ', ', $hw_ver_links ) . '</td>';
+		$outstr .= '<td>' . join( ', ', $hw_ver_links ) . '</td>';
 
 		$outstr .= '</tr>';
 	}
@@ -152,6 +154,7 @@ function gluon_beautify_hw_name( $hw, $discard_vendor = '' ) {
 		$hw = str_replace( '-', ' ', $hw );
 		$hw = str_replace( 'TP LINK ', 'TP-Link ', $hw );
 		$hw = str_replace( ' TL ', ' TL-', $hw );
+		$hw = str_replace( 'N ND', 'N/ND', $hw );
 	} elseif ( ! strncmp( $hw, 'ubiquiti', 8 ) ) {
 		if ( $discard_vendor ) $hw = str_replace( $discard_vendor, '', $hw );
 		$hw = str_replace( 'bullet-m', 'bullet-m / nanostation-loco-m', $hw );
@@ -173,7 +176,7 @@ function gluon_beautify_hw_name( $hw, $discard_vendor = '' ) {
 	} elseif ( ! strncmp( $hw, 'buffalo', 7 ) ) {
 		if ( $discard_vendor ) $hw = str_replace( $discard_vendor, '', $hw );
 		$hw = strtoupper( $hw );
-		$hw = str_replace('BUFFALO', 'Buffalo', $hw );
+		$hw = str_replace('BUFFALO', 'Buffalo ', $hw );
 		$hw = str_replace( 'HP-AG300H-WZR-600DHP', 'HP-AG300H & WZR-600DHP', $hw );
 		$hw = str_replace( '-WZR', 'WZR', $hw );
 	}
