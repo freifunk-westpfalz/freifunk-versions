@@ -1,21 +1,31 @@
 <?php
 /*
-Plugin Name: Freifunk Hamburg Firmware List Shortcode
-Plugin URI: http://mschuette.name/
-Description: Defines shortcodes to display Freifunk Hamburg Firmware versions
+Plugin Name: Gluon Firmware List Shortcode
+Plugin URI: https://github.com/freifunk-westpfalz/freifunk-versions
+Description: Defines shortcodes to display Gluon Firmware versions
 Version: 0.4dev
-Author: Martin Schuette
-Author URI: http://mschuette.name/
+Author: Stephan Platz
+Author URI: http://paalsteek.de/
 Licence: 2-clause BSD
+
+This is a derivate of the following plugin
+
+Origin Plugin Name: Freifunk Hamburg Firmware List Shortcode
+Origin Plugin URI: http://mschuette.name/
+Origin Description: Defines shortcodes to display Freifunk Hamburg Firmware versions
+Origin Version: 0.4dev
+Origin Author: Martin Schuette
+Origin Author URI: http://mschuette.name/
+Origin Licence: 2-clause BSD
 */
 
-define( 'FF_HH_STABLE_BASEDIR', 'http://updates.hamburg.freifunk.net/stable/' );
-define( 'FF_HH_CACHETIME', 15 );
+define( 'GLUON_STABLE_BASEDIR', 'http://download.westpfalz.freifunk.net/stable/' );
+define( 'GLUON_CACHETIME', 15 );
 
 /* gets metadata from URL, handles caching */
-function ff_hh_getmanifest( $basedir ) {
+function gluon_getmanifest( $basedir ) {
 	// Caching
-	if ( WP_DEBUG || ( false === ( $manifest = get_transient( 'ff_hh_manifest' ) ) ) ) {
+	if ( WP_DEBUG || ( false === ( $manifest = get_transient( 'gluon_manifest' ) ) ) ) {
 		$manifest      = array();
 		$url           = $basedir . 'sysupgrade/stable.manifest';
 		$http_response = wp_remote_get( $url );  // TODO: error handling
@@ -33,24 +43,24 @@ function ff_hh_getmanifest( $basedir ) {
 			}
 		}
 
-		$cachetime = FF_HH_CACHETIME * MINUTE_IN_SECONDS;
-		set_transient( 'ff_hh_manifest', $manifest, $cachetime );
+		$cachetime = GLUON_CACHETIME * MINUTE_IN_SECONDS;
+		set_transient( 'gluon_manifest', $manifest, $cachetime );
 	}
 	return $manifest;
 }
 
 /* gets latest version from first manifest line */
-function ff_hh_getlatest( $basedir ) {
+function gluon_getlatest( $basedir ) {
 	// Caching
-	if ( false === ( $sw_ver = get_transient( 'ff_hh_latestversion' ) ) ) {
+	if ( false === ( $sw_ver = get_transient( 'gluon_latestversion' ) ) ) {
 		$sw_ver = 'unknown';
 		$input  = wp_remote_retrieve_body( wp_remote_get( $basedir . 'sysupgrade/stable.manifest' ) );
 		foreach ( explode( "\n", $input ) as $line ) {
 			$ret = sscanf( $line, '%s %s %s %s', $hw, $sw_ver, $hash, $filename );
 			if ( $ret === 4 ) {
 				// break processing on first matching line
-				$cachetime = FF_HH_CACHETIME * MINUTE_IN_SECONDS;
-				set_transient( 'ff_hh_latestversion', $sw_ver, $cachetime );
+				$cachetime = GLUON_CACHETIME * MINUTE_IN_SECONDS;
+				set_transient( 'gluon_latestversion', $sw_ver, $cachetime );
 				break;
 			}
 		}
@@ -58,24 +68,24 @@ function ff_hh_getlatest( $basedir ) {
 	return $sw_ver;
 }
 
-if ( ! shortcode_exists( 'ff_hh_latestversion' ) ) {
-	add_shortcode( 'ff_hh_latestversion', 'ff_hh_shortcode_latestversion' );
+if ( ! shortcode_exists( 'gluon_latestversion' ) ) {
+	add_shortcode( 'gluon_latestversion', 'gluon_shortcode_latestversion' );
 }
 // Example:
-// [ff_hh_latestversion]
-function ff_hh_shortcode_latestversion( $atts, $content, $name ) {
-	$sw_ver = ff_hh_getlatest( FF_HH_STABLE_BASEDIR );
+// [gluon_latestversion]
+function gluon_shortcode_latestversion( $atts, $content, $name ) {
+	$sw_ver = gluon_getlatest( GLUON_STABLE_BASEDIR );
 	$outstr = "<span class=\"ff $name\">$sw_ver</span>";
 	return $outstr;
 }
-if ( ! shortcode_exists( 'ff_hh_versions' ) ) {
-	add_shortcode( 'ff_hh_versions', 'ff_hh_shortcode_versions' );
+if ( ! shortcode_exists( 'gluon_versions' ) ) {
+	add_shortcode( 'gluon_versions', 'gluon_shortcode_versions' );
 }
 // Example:
-// [ff_hh_versions]
-// [ff_hh_versions grep="ubiquiti"]
-function ff_hh_shortcode_versions( $atts, $content, $name ) {
-	$manifest = ff_hh_getmanifest( FF_HH_STABLE_BASEDIR );
+// [gluon_versions]
+// [gluon_versions grep="ubiquiti"]
+function gluon_shortcode_versions( $atts, $content, $name ) {
+	$manifest = gluon_getmanifest( GLUON_STABLE_BASEDIR );
 
 	$outstr  = "<div class=\"ff $name\">";
 	$outstr .= '<table><tr><th>Modell</th><th>Erstinstallation</th><th>Aktualisierung</th></tr>';
@@ -94,7 +104,7 @@ function ff_hh_shortcode_versions( $atts, $content, $name ) {
 		if ( $grep && ( false === strpos( $hw, $grep ) ) ) {
 			continue;
 		}
-		$hw = ff_hh_beautify_hw_name( $hw, $grep );
+		$hw = gluon_beautify_hw_name( $hw, $grep );
 		$outstr .= sprintf( "\n<tr><td>%s</td>", $hw );
 
 		// factory versions
@@ -133,7 +143,7 @@ function ff_hh_shortcode_versions( $atts, $content, $name ) {
 // hardware model name.
 // set $discard_vendor to strip the vendor name
 // (used for single-vendor lists, e.g. $discard_vendor = 'tp-link' )
-function ff_hh_beautify_hw_name( $hw, $discard_vendor = '' ) {
+function gluon_beautify_hw_name( $hw, $discard_vendor = '' ) {
 	if ( ! strncmp( $hw, 'tp-link', 7 ) ) {
 		if ( $discard_vendor ) $hw = str_replace( $discard_vendor, '', $hw );
 		$hw = strtoupper( $hw );
