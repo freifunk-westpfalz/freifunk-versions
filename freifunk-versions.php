@@ -29,22 +29,24 @@ function gluon_getmanifest( $basedir ) {
 		$manifest      = array();
 		$url           = $basedir . 'sysupgrade/stable.manifest';
 		$http_response = wp_remote_get( $url );  // TODO: error handling
-		$input         = wp_remote_retrieve_body( $http_response );
-		foreach ( explode( "\n", $input ) as $line ) {
-			$ret = sscanf( $line, '%s %s %s %s', $hw, $sw_ver, $hash, $filename );
-			if ( $ret === 4 ) {
-				if ( preg_match( '/^(.*)-v(\d+)$/', $hw, $matches ) ) {
-					$hw     = $matches[1];
-					$hw_ver = $matches[2];
-				} else {
-					$hw_ver = '1';
+		if ( is_array($http_response) && $http_response['response']['code'] == 200 ) {
+			$input         = wp_remote_retrieve_body( $http_response );
+			foreach ( explode( "\n", $input ) as $line ) {
+				$ret = sscanf( $line, '%s %s %s %s', $hw, $sw_ver, $hash, $filename );
+				if ( $ret === 4 ) {
+					if ( preg_match( '/^(.*)-v(\d+)$/', $hw, $matches ) ) {
+						$hw     = $matches[1];
+						$hw_ver = $matches[2];
+					} else {
+						$hw_ver = '1';
+					}
+					$manifest[$hw][$hw_ver] = $filename;
 				}
-				$manifest[$hw][$hw_ver] = $filename;
 			}
-		}
 
-		$cachetime = GLUON_CACHETIME * MINUTE_IN_SECONDS;
-		set_transient( 'gluon_manifest', $manifest, $cachetime );
+			$cachetime = GLUON_CACHETIME * MINUTE_IN_SECONDS;
+			set_transient( 'gluon_manifest', $manifest, $cachetime );
+		}
 	}
 	return $manifest;
 }
