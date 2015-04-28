@@ -16,7 +16,7 @@ class SimpleTests extends WP_UnitTestCase {
 		);
 		foreach ( $cmplist as $item ) {
 			$expect = $item[2];
-			$result = ff_hh_beautify_hw_name( $item[0], $item[1] );
+			$result = gluon_beautify_hw_name( $item[0], $item[1] );
 			$this->assertEquals( $expect, trim( $result ) );
 		}
 	}
