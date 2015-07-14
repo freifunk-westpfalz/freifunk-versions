@@ -41,6 +41,10 @@ function gluon_getmanifest( $basedir ) {
 						$hw_ver = '1';
 					}
 					$manifest[$hw][$hw_ver] = $filename;
+					if ( strcmp( $hw, 'x86-generic' ) == 0 ) {
+						$manifest['x86-virtualbox'][1] = str_replace('generic-sysupgrade.img.gz', 'virtualbox.vdi', $filename);
+						$manifest['x86-vmware'][1] = str_replace('generic-sysupgrade.img.gz', 'vmware.vmdk', $filename);
+					}
 				}
 			}
 
@@ -108,6 +112,10 @@ function gluon_shortcode_versions( $atts, $content, $name ) {
 		if ( $grep && ( false === strpos( $hw, $grep ) ) ) {
 			continue;
 		}
+		$factory_only = false;
+		if ( ! strcmp( $hw, 'x86-vmware' ) || ! strcmp( $hw, 'x86-virtualbox' ) ) {
+			$factory_only = true;
+		}
 		$hw = gluon_beautify_hw_name( $hw, $grep );
 		$outstr .= sprintf( "\n<tr><td>%s</td>", $hw );
 
@@ -125,12 +133,14 @@ function gluon_shortcode_versions( $atts, $content, $name ) {
 
 		// sysupgrade versions
 		$hw_ver_links = array();
-		foreach ( $versions as $hw_ver => $filename ) {
-			$hw_ver_links[] = sprintf(
-				'<a href="%s%s">v%s</a>',
-				GLUON_STABLE_BASEDIR.'sysupgrade/',
-				$filename, $hw_ver
-			);
+		if ( ! $factory_only ) {
+			foreach ( $versions as $hw_ver => $filename ) {
+				$hw_ver_links[] = sprintf(
+					'<a href="%s%s">v%s</a>',
+					GLUON_STABLE_BASEDIR.'sysupgrade/',
+					$filename, $hw_ver
+				);
+			}
 		}
 		$outstr .= '<td>' . join( ', ', $hw_ver_links ) . '</td>';
 
@@ -192,6 +202,9 @@ function gluon_beautify_hw_name( $hw, $discard_vendor = '' ) {
                 if ( $discard_vendor ) $hw = str_replace( $discard_vendor, '', $hw );
                 $hw = strtoupper( $hw );
                 $hw = str_replace('GL-INET', 'Gl.iNet', $hw );
+                $hw = str_replace( '-', '', $hw );
+        } elseif ( ! strncmp( $hw, 'x86', 3 ) ) {
+                if ( $discard_vendor ) $hw = str_replace( $discard_vendor, '', $hw );
                 $hw = str_replace( '-', '', $hw );
 	}
 	return $hw;
