@@ -123,6 +123,9 @@ function gluon_shortcode_versions( $atts, $content, $name ) {
 		$hw_ver_links = array();
 		foreach ( $versions as $hw_ver => $filename ) {
 			$filename = str_replace( '-sysupgrade', '', $filename );
+			if (strpos($filename, 'netgear') !== false) {
+				$filename = str_replace( '.bin', '.img', $filename );
+			}
 			$hw_ver_links[] = sprintf(
 				'<a href="%s%s">v%s</a>',
 				GLUON_STABLE_BASEDIR.'factory/',
